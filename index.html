@@ -1,305 +1,1039 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru" class="scroll-smooth">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Edge Delivery Network &mdash; Node Active</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PingWing VPN — Включил. Забыл</title>
+  <meta name="description" content="PingWing VPN: современные решения маскировки трафика, обход белых списков на LTE/4G, умная маршрутизация и порты до 10 Гбит/с. Строгая политика Zero-Logs." />
+  <meta name="theme-color" content="#05080E" />
+  <meta property="og:title" content="PingWing VPN — Включил. Забыл" />
+  <meta property="og:description" content="Обход блокировок, Anti-DPI маскировка, умная маршрутизация и скорость до 10 Гбит/с." />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2305080E'/%3E%3Ctext x='16' y='21.5' text-anchor='middle' font-family='Arial,Helvetica,sans-serif' font-size='17' font-weight='700' fill='%2300FF9D'%3Epw%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['"Space Grotesk"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            cyber: { 950: '#05080E', 900: '#090D16', 800: '#0E1524' },
+            neon: { DEFAULT: '#00FF9D' },
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
-    :root {
-      --bg: #090b10;
-      --card-bg: rgba(16, 20, 31, 0.7);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-accent: rgba(56, 189, 248, 0.3);
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-glow: rgba(56, 189, 248, 0.15);
-      --success: #10b981;
-      --success-glow: rgba(16, 185, 129, 0.2);
+    html { background: #05080E; }
+    body { -webkit-font-smoothing: antialiased; }
+    ::selection { background: rgba(0, 255, 157, 0.3); color: #fff; }
+    section[id] { scroll-margin-top: 96px; }
+
+    /* Aurora ribbons: blurred SVG strokes are rasterized once; only transform and
+       opacity animate so Firefox keeps the layers on the compositor */
+    @keyframes aurora-drift {
+      0%, 100% { transform: translate3d(-2%, 0, 0) rotate(-1deg); opacity: .42; }
+      50%      { transform: translate3d(2%, -3%, 0) rotate(1deg); opacity: .3; }
+    }
+    @keyframes aurora-drift-alt {
+      0%, 100% { transform: translate3d(2%, -1%, 0) rotate(.8deg); opacity: .26; }
+      50%      { transform: translate3d(-2.5%, 2%, 0) rotate(-1.2deg); opacity: .4; }
+    }
+    .aurora-ribbon {
+      pointer-events: none;
+      mix-blend-mode: screen;
+      transform-origin: 50% 60%;
+      opacity: .4;
+      animation: aurora-drift 24s ease-in-out infinite;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+    .aurora-ribbon > svg {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      overflow: visible;
+    }
+    .aurora-ribbon-2 { animation-name: aurora-drift-alt; animation-duration: 28s; animation-delay: -9s; }
+    .aurora-ribbon-3 { animation-duration: 30s; animation-delay: -17s; }
+    @media (prefers-reduced-motion: reduce) {
+      .aurora-ribbon { animation: none; }
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    /* Stars */
+    @keyframes twinkle {
+      0%, 100% { opacity: .15; }
+      50% { opacity: 1; }
     }
+    .star { position: absolute; border-radius: 9999px; background: #fff; animation: twinkle 4s ease-in-out infinite; }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
-    }
-
-    header {
-      padding: 24px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 600;
-      font-size: 1.1rem;
-      letter-spacing: -0.02em;
-    }
-
-    .brand-icon {
-      width: 24px;
-      height: 24px;
-      background: linear-gradient(135deg, var(--accent), #818cf8);
-      border-radius: 6px;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 0 16px var(--accent-glow);
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      background: rgba(255, 255, 255, 0.03);
-      padding: 6px 14px;
-      border-radius: 9999px;
-      border: 1px solid var(--border);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--success);
-      border-radius: 50%;
-      box-shadow: 0 0 8px var(--success);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    main {
-      max-width: 880px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 64px 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    .hero-tag {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      font-weight: 700;
-      color: var(--accent);
-      margin-bottom: 16px;
-      padding: 4px 10px;
-      background: rgba(56, 189, 248, 0.08);
-      border-radius: 4px;
-      border: 1px solid rgba(56, 189, 248, 0.2);
-    }
-
-    h1 {
-      font-size: clamp(2.2rem, 5vw, 3.4rem);
-      font-weight: 700;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      margin-bottom: 20px;
-      background: linear-gradient(180deg, #ffffff 30%, #94a3b8 100%);
+    .text-gradient {
+      background-image: linear-gradient(90deg, #6EE7B7 0%, #34D399 50%, #22D3EE 100%);
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
     }
 
-    p.description {
-      font-size: 1.1rem;
-      color: var(--text-muted);
-      max-width: 580px;
-      line-height: 1.6;
-      margin-bottom: 48px;
+    /* Ice floe bobbing */
+    @keyframes float {
+      0%   { transform: translateY(0) rotate(-1.6deg); }
+      25%  { transform: translateY(-7px) rotate(0.4deg); }
+      50%  { transform: translateY(-2px) rotate(1.8deg); }
+      75%  { transform: translateY(-9px) rotate(-0.2deg); }
+      100% { transform: translateY(0) rotate(-1.6deg); }
+    }
+    .floe { animation: float 7s cubic-bezier(.45,.05,.55,.95) infinite; transform-origin: 50% 85%; }
+
+    @keyframes reflection {
+      0%, 100% { transform: scaleX(1) translateY(0); opacity: .45; }
+      50% { transform: scaleX(1.08) translateY(3px); opacity: .25; }
+    }
+    .floe-reflection, .berg-reflection { animation: reflection 7s ease-in-out infinite; transform-origin: 50% 0; will-change: transform, opacity; }
+    .berg-reflection { animation-duration: 9s; }
+
+    /* Penguin wave */
+    @keyframes wave {
+      0%, 55%, 100% { transform: rotate(0deg); }
+      62% { transform: rotate(-24deg); }
+      70% { transform: rotate(10deg); }
+      78% { transform: rotate(-24deg); }
+      86% { transform: rotate(10deg); }
+      94% { transform: rotate(0deg); }
+    }
+    .flipper-wave { transform-box: view-box; transform-origin: 58px 122px; animation: wave 4.5s ease-in-out infinite; }
+
+    @keyframes blink {
+      0%, 92%, 100% { transform: scaleY(1); }
+      95% { transform: scaleY(0.1); }
+    }
+    .eye { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
+
+    /* Ocean: the layer is oversized and translated, never re-painted */
+    .ocean-lines {
+      background-image: repeating-linear-gradient(180deg, transparent 0 16px, rgba(148, 230, 255, .065) 16px 17px, transparent 17px 18px);
+    }
+    @keyframes swell {
+      0% { transform: translate3d(0, -18px, 0); }
+      100% { transform: translate3d(0, 0, 0); }
+    }
+    .ocean-swell { position: absolute; left: 0; right: 0; top: 0; bottom: -18px; animation: swell 6s linear infinite; will-change: transform; }
+    @keyframes glint {
+      0% { transform: translate3d(-25%, 0, 0); }
+      100% { transform: translate3d(25%, 0, 0); }
+    }
+    .ocean-glint {
+      background: linear-gradient(90deg, transparent 0%, rgba(125, 211, 252, .07) 25%, transparent 45%, rgba(0, 255, 157, .05) 65%, transparent 85%);
+      animation: glint 14s ease-in-out infinite alternate;
+      will-change: transform;
     }
 
-    .dashboard-panel {
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 20px;
-      text-align: left;
+    /* Glow button */
+    .btn-glow {
+      background: linear-gradient(135deg, #00FF9D 0%, #10B981 50%, #06B6D4 100%);
+      background-size: 200% 200%;
+      box-shadow: 0 0 0 1px rgba(0,255,157,.35), 0 10px 40px -10px rgba(0,255,157,.6);
+      transition: background-position .6s ease, box-shadow .4s ease, transform .3s ease;
     }
+    .btn-glow:hover { background-position: 100% 0; box-shadow: 0 0 0 1px rgba(0,255,157,.6), 0 14px 50px -8px rgba(0,255,157,.8); transform: translateY(-1px); }
 
-    .metric-card {
-      border-left: 2px solid var(--border);
-      padding-left: 16px;
-      transition: border-color 0.2s ease;
-    }
+    .text-glow { text-shadow: 0 0 24px rgba(0, 255, 157, .45); }
+    .logo-glow { filter: drop-shadow(0 0 8px rgba(0, 255, 157, .55)); }
 
-    .metric-card:hover {
-      border-left-color: var(--accent);
-    }
+    /* Accordion */
+    .faq-panel { max-height: 0; overflow: hidden; transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .35s ease; opacity: 0; }
+    .faq-item.open .faq-panel { opacity: 1; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); color: #00FF9D; }
+    .faq-chevron { transition: transform .4s cubic-bezier(.4,0,.2,1), color .3s; }
 
-    .metric-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
+    /* Mobile menu */
+    #mobile-menu { max-height: 0; opacity: 0; overflow: hidden; transition: max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s ease, margin .3s; }
+    #mobile-menu.open { max-height: 520px; opacity: 1; }
 
-    .metric-value {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-main);
-      font-feature-settings: "tnum";
-      font-variant-numeric: tabular-nums;
-    }
+    /* Modal */
+    #modal { transition: opacity .3s ease, visibility .3s; }
+    #modal.hidden-modal { opacity: 0; visibility: hidden; pointer-events: none; }
+    #modal .modal-card { transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+    #modal.hidden-modal .modal-card { transform: translateY(16px) scale(.98); opacity: 0; }
 
-    .terminal-notice {
-      margin-top: 32px;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
+    .price-value { transition: opacity .25s ease, transform .25s ease; }
+    .price-value.updating { opacity: 0; transform: translateY(-6px); }
 
-    .terminal-notice span:first-child::before {
-      content: "$ ";
-      color: var(--accent);
-    }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 9999px; }
 
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 20px 32px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .meta-group {
-      display: flex;
-      gap: 20px;
-    }
-
-    .meta-item {
-      display: flex;
-      gap: 6px;
-    }
-
-    .meta-item span:first-child {
-      color: rgba(148, 163, 184, 0.6);
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
-<body>
 
-  <header>
-    <div class="brand">
-      <div class="brand-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
+<body class="relative bg-cyber-950 text-slate-300 font-sans antialiased overflow-x-hidden">
+
+  <svg width="0" height="0" class="absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="pw-stroke" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#00FF9D" />
+        <stop offset="1" stop-color="#22D3EE" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="sticky top-0 z-50 px-4 py-3">
+    <div class="mx-auto max-w-7xl rounded-2xl border border-white/10 bg-[#070B13]/80 backdrop-blur-[12px] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
+      <div class="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
+        <a href="#top" class="flex items-center gap-2.5 shrink-0" aria-label="PingWing VPN — на главную">
+          <span class="font-display text-lg font-bold tracking-tight text-white">PingWing <span class="text-emerald-400">VPN</span></span>
+        </a>
+
+        <nav class="hidden lg:block" aria-label="Основная навигация">
+          <ul class="flex items-center gap-1 text-sm font-medium">
+            <li><a href="#features" class="rounded-lg px-3 py-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-300">Преимущества</a></li>
+            <li><a href="#pricing" class="rounded-lg px-3 py-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-300">Тарифы</a></li>
+            <li><a href="#download" class="rounded-lg px-3 py-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-300">Приложения</a></li>
+            <li><a href="#faq" class="rounded-lg px-3 py-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-300">FAQ</a></li>
+            <li><a href="#contacts" class="rounded-lg px-3 py-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-emerald-300">Контакты</a></li>
+          </ul>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <a href="https://pingwing.win" target="_blank" rel="noopener noreferrer"
+             class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all duration-500 hover:border-emerald-400/70 hover:bg-emerald-400/20 hover:text-white hover:shadow-[0_0_24px_rgba(0,255,157,0.35)]">
+            <i data-lucide="log-in" class="h-4 w-4"></i>
+            Регистрация / Вход
+          </a>
+          <button id="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu"
+                  class="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:border-emerald-400/40 hover:text-emerald-300">
+            <span class="sr-only">Открыть меню</span>
+            <i data-lucide="menu" class="h-5 w-5 icon-open"></i>
+            <i data-lucide="x" class="h-5 w-5 icon-close hidden"></i>
+          </button>
+        </div>
       </div>
-      <span>StrataEdge CDN</span>
-    </div>
-    <div class="status-badge">
-      <div class="status-dot"></div>
-      <span>Edge Node Operational</span>
+
+      <div id="mobile-menu" class="lg:hidden px-4">
+        <nav aria-label="Мобильная навигация" class="border-t border-white/10 py-3">
+          <ul class="flex flex-col gap-1 text-base font-medium">
+            <li><a href="#features" class="mobile-link flex items-center justify-between rounded-xl px-3 py-3 text-slate-200 hover:bg-white/5 hover:text-emerald-300">Преимущества <i data-lucide="chevron-right" class="h-4 w-4 opacity-50"></i></a></li>
+            <li><a href="#pricing" class="mobile-link flex items-center justify-between rounded-xl px-3 py-3 text-slate-200 hover:bg-white/5 hover:text-emerald-300">Тарифы <i data-lucide="chevron-right" class="h-4 w-4 opacity-50"></i></a></li>
+            <li><a href="#download" class="mobile-link flex items-center justify-between rounded-xl px-3 py-3 text-slate-200 hover:bg-white/5 hover:text-emerald-300">Приложения <i data-lucide="chevron-right" class="h-4 w-4 opacity-50"></i></a></li>
+            <li><a href="#faq" class="mobile-link flex items-center justify-between rounded-xl px-3 py-3 text-slate-200 hover:bg-white/5 hover:text-emerald-300">FAQ <i data-lucide="chevron-right" class="h-4 w-4 opacity-50"></i></a></li>
+            <li><a href="#contacts" class="mobile-link flex items-center justify-between rounded-xl px-3 py-3 text-slate-200 hover:bg-white/5 hover:text-emerald-300">Контакты <i data-lucide="chevron-right" class="h-4 w-4 opacity-50"></i></a></li>
+          </ul>
+          <a href="https://pingwing.win" target="_blank" rel="noopener noreferrer"
+             class="mt-3 flex items-center justify-center gap-2 rounded-xl btn-glow px-4 py-3 text-sm font-semibold text-cyber-950">
+            <i data-lucide="log-in" class="h-4 w-4"></i>
+            Регистрация / Вход
+          </a>
+        </nav>
+      </div>
     </div>
   </header>
 
-  <main>
-    <div class="hero-tag">Anycast Infrastructure</div>
-    <h1>Global Content Acceleration</h1>
-    <p class="description">
-      This edge node is actively routing cached assets and optimizing application traffic across the distributed network backbone.
-    </p>
+  <main id="top" class="relative">
 
-    <div class="dashboard-panel">
-      <div class="metric-card">
-        <div class="metric-label">Node Identifier</div>
-        <div class="metric-value">FRA-EDGE-04</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Protocol</div>
-        <div class="metric-value">HTTP/3 (QUIC)</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Cache State</div>
-        <div class="metric-value" style="color: var(--success);">HIT (Static)</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Latency to Origin</div>
-        <div class="metric-value">1.8 ms</div>
-      </div>
-    </div>
+    <!-- ===================== HERO ===================== -->
+    <section class="relative -mt-[88px] flex min-h-screen flex-col overflow-hidden pt-[88px]" aria-labelledby="hero-title">
+      <!-- Scene -->
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+        <!-- Sky -->
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,#0E1A2E_0%,#090D16_45%,#05080E_80%)]"></div>
+        <div id="stars" class="absolute inset-x-0 top-0 h-[65%]"></div>
 
-    <div class="terminal-notice">
-      <span>direct root directory access is restricted by policy</span>
-      <span style="color: #64748b;">403_INDEX_BYPASS</span>
-    </div>
+        <!-- Aurora -->
+        <svg class="absolute h-0 w-0" focusable="false" aria-hidden="true">
+          <defs>
+            <linearGradient id="aur-band-a" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#00FF9D" stop-opacity="0" />
+              <stop offset=".22" stop-color="#00FF9D" stop-opacity=".38" />
+              <stop offset=".55" stop-color="#10B981" stop-opacity=".32" />
+              <stop offset=".8" stop-color="#06B6D4" stop-opacity=".26" />
+              <stop offset=".92" stop-color="#8B5CF6" stop-opacity=".12" />
+              <stop offset="1" stop-color="#8B5CF6" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="aur-fringe" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#A855F7" stop-opacity="0" />
+              <stop offset=".3" stop-color="#8B5CF6" stop-opacity=".16" />
+              <stop offset=".6" stop-color="#C084FC" stop-opacity=".2" />
+              <stop offset=".85" stop-color="#8B5CF6" stop-opacity=".12" />
+              <stop offset="1" stop-color="#A855F7" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="aur-band-b" x1="0" y1="0" x2="1600" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#06B6D4" stop-opacity="0" />
+              <stop offset=".3" stop-color="#06B6D4" stop-opacity=".3" />
+              <stop offset=".65" stop-color="#10B981" stop-opacity=".34" />
+              <stop offset="1" stop-color="#00FF9D" stop-opacity="0" />
+            </linearGradient>
+            <filter id="aur-soft" filterUnits="userSpaceOnUse" x="-200" y="-200" width="2000" height="800" color-interpolation-filters="sRGB">
+              <feGaussianBlur stdDeviation="26" />
+            </filter>
+            <filter id="aur-softer" filterUnits="userSpaceOnUse" x="-200" y="-200" width="2000" height="800" color-interpolation-filters="sRGB">
+              <feGaussianBlur stdDeviation="44" />
+            </filter>
+          </defs>
+        </svg>
+        <div class="aurora-ribbon absolute -left-[10%] top-[2%] h-[44%] w-[120%]">
+          <svg viewBox="0 0 1600 400" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+            <path filter="url(#aur-softer)" fill="none" stroke="url(#aur-fringe)" stroke-width="70" stroke-linecap="round" transform="translate(0 -70)" d="M60 250 C360 120 640 270 900 190 C1160 110 1360 150 1540 220" />
+            <path filter="url(#aur-softer)" fill="none" stroke="url(#aur-band-a)" stroke-width="120" stroke-linecap="round" d="M60 250 C360 120 640 270 900 190 C1160 110 1360 150 1540 220" />
+            <path filter="url(#aur-soft)" fill="none" stroke="url(#aur-band-a)" stroke-width="34" stroke-linecap="round" d="M60 250 C360 120 640 270 900 190 C1160 110 1360 150 1540 220" />
+          </svg>
+        </div>
+        <div class="aurora-ribbon aurora-ribbon-2 absolute -left-[5%] -top-[4%] h-[40%] w-[115%]">
+          <svg viewBox="0 0 1600 400" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+            <path filter="url(#aur-softer)" fill="none" stroke="url(#aur-fringe)" stroke-width="56" stroke-linecap="round" transform="translate(0 -60)" d="M80 170 C340 260 620 110 880 170 C1140 230 1360 120 1520 150" />
+            <path filter="url(#aur-softer)" fill="none" stroke="url(#aur-band-b)" stroke-width="100" stroke-linecap="round" d="M80 170 C340 260 620 110 880 170 C1140 230 1360 120 1520 150" />
+            <path filter="url(#aur-soft)" fill="none" stroke="url(#aur-band-b)" stroke-width="26" stroke-linecap="round" d="M80 170 C340 260 620 110 880 170 C1140 230 1360 120 1520 150" />
+          </svg>
+        </div>
+        <div class="aurora-ribbon aurora-ribbon-3 absolute -right-[15%] top-[10%] h-[34%] w-[85%]">
+          <svg viewBox="0 0 1600 400" preserveAspectRatio="none" focusable="false" aria-hidden="true">
+            <path filter="url(#aur-softer)" fill="none" stroke="url(#aur-band-a)" stroke-width="90" stroke-linecap="round" d="M80 230 C380 160 700 260 1000 200 C1240 150 1400 200 1520 180" />
+          </svg>
+        </div>
+
+        <!-- Ocean -->
+        <div class="absolute inset-x-0 bottom-0 h-[38%] overflow-hidden bg-gradient-to-b from-[#0A1A2B] via-[#07111D] to-[#05080E]">
+          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/40 to-transparent"></div>
+          <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-emerald-400/10 to-transparent"></div>
+          <div class="ocean-swell ocean-lines opacity-80"></div>
+          <div class="absolute inset-y-0 -left-1/4 -right-1/4 ocean-glint"></div>
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#05080E]/40 to-[#05080E]"></div>
+        </div>
+
+        <!-- Iceberg + reflection -->
+        <div class="absolute bottom-[38%] right-[46%] w-[200px] opacity-55 sm:w-[280px] lg:right-[27%] lg:w-[360px]">
+          <svg viewBox="0 0 400 220" class="block h-auto w-full">
+            <defs>
+              <linearGradient id="berg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E0F7FF" stop-opacity=".9" />
+                <stop offset=".5" stop-color="#7DD3FC" stop-opacity=".5" />
+                <stop offset="1" stop-color="#0E7490" stop-opacity=".25" />
+              </linearGradient>
+            </defs>
+            <path d="M0 220 L60 140 L95 160 L150 50 L185 90 L215 20 L260 110 L290 95 L340 160 L370 150 L400 220 Z" fill="url(#berg)" />
+            <path d="M150 50 L170 140 L215 20 L230 120 L260 110 L250 220 L120 220 Z" fill="#fff" fill-opacity=".12" />
+          </svg>
+          <svg viewBox="0 0 400 220" preserveAspectRatio="none" class="berg-reflection absolute left-0 top-full h-[48%] w-full">
+            <defs>
+              <linearGradient id="bergReflect" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#7DD3FC" stop-opacity="0" />
+                <stop offset="1" stop-color="#7DD3FC" stop-opacity=".38" />
+              </linearGradient>
+            </defs>
+            <path transform="translate(0 220) scale(1 -1)" d="M0 220 L60 140 L95 160 L150 50 L185 90 L215 20 L260 110 L290 95 L340 160 L370 150 L400 220 Z" fill="url(#bergReflect)" />
+            <path d="M40 30 H360 M80 70 H320 M130 115 H270" stroke="#05080E" stroke-opacity=".55" stroke-width="5" />
+          </svg>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="relative z-10 mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 items-center gap-6 px-4 pb-0 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-8 lg:pt-6">
+        <div class="lg:col-span-7">
+          <h1 id="hero-title" class="font-display text-4xl font-bold leading-[1.05] tracking-tight text-white text-balance sm:text-5xl lg:text-6xl">
+            Передовые решения <span class="bg-gradient-to-r from-emerald-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">маскировки трафика</span> для обхода блокировок
+          </h1>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#pricing" class="btn-glow inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-base font-semibold text-cyber-950">
+              <i data-lucide="zap" class="h-5 w-5"></i>
+              Попробовать бесплатно
+            </a>
+          </div>
+        </div>
+
+        <!-- Penguin on ice floe -->
+        <div class="relative flex justify-center self-end lg:col-span-5 lg:justify-end">
+          <div class="relative w-[260px] sm:w-[320px] lg:w-[380px]">
+            <svg class="floe-reflection pointer-events-none absolute left-[9%] top-[93%] h-auto w-[84%]" viewBox="0 0 268 60" aria-hidden="true">
+              <defs>
+                <linearGradient id="floeReflect" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#7DD3FC" stop-opacity=".42" />
+                  <stop offset="1" stop-color="#7DD3FC" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path d="M0 0 H268 L236 22 L168 40 L96 40 L30 24 Z" fill="url(#floeReflect)" />
+              <path d="M24 12 H244 M60 26 H210 M100 38 H170" stroke="#05080E" stroke-opacity=".5" stroke-width="2" />
+            </svg>
+
+            <div class="floe relative">
+              <!-- Speech bubble -->
+              <div class="absolute -top-4 right-0 z-10 sm:right-2">
+                <p class="relative rounded-2xl border border-emerald-400/40 bg-[#0B1820] px-4 py-2 font-mono text-sm font-medium text-emerald-200 shadow-[0_0_24px_rgba(0,255,157,0.15)]">
+                  hello, world
+                  <span aria-hidden="true" class="absolute -bottom-[7px] left-5 h-3 w-3 rotate-45 border-b border-r border-emerald-400/40 bg-[#0B1820]"></span>
+                </p>
+              </div>
+
+              <svg viewBox="0 0 320 330" class="w-full h-auto" role="img" aria-label="Пингвин в красной шапке с помпоном машет лапкой, стоя на льдине">
+                <defs>
+                  <linearGradient id="floeTop" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#F0FBFF" />
+                    <stop offset="1" stop-color="#BAE6FD" />
+                  </linearGradient>
+                  <linearGradient id="floeSide" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#7DD3FC" />
+                    <stop offset="1" stop-color="#0E7490" stop-opacity=".6" />
+                  </linearGradient>
+                  <radialGradient id="bodyGrad" cx=".4" cy=".35" r=".8">
+                    <stop offset="0" stop-color="#1E293B" />
+                    <stop offset="1" stop-color="#0B1220" />
+                  </radialGradient>
+                  <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#FFFFFF" />
+                    <stop offset="1" stop-color="#D6E7F0" />
+                  </linearGradient>
+                  <linearGradient id="beanie" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#F87171" />
+                    <stop offset="1" stop-color="#DC2626" />
+                  </linearGradient>
+                </defs>
+
+                <!-- Ice floe -->
+                <path d="M30 268 L58 250 L120 246 L176 242 L238 248 L286 256 L298 272 L270 300 L200 312 L120 312 L56 300 Z" fill="url(#floeSide)" />
+                <path d="M30 268 L58 250 L120 246 L176 242 L238 248 L286 256 L298 272 L250 282 L160 286 L80 282 Z" fill="url(#floeTop)" />
+                <path d="M80 282 L120 296 L110 312 M200 284 L214 300 M250 282 L262 298" stroke="#E0F2FE" stroke-opacity=".5" stroke-width="1.5" fill="none" />
+                <ellipse cx="160" cy="266" rx="70" ry="9" fill="#0E7490" fill-opacity=".18" />
+
+                <!-- Penguin group (centered at x=160) -->
+                <g transform="translate(60 22)">
+                  <!-- Feet -->
+                  <ellipse cx="80" cy="244" rx="20" ry="8" fill="#F59E0B" />
+                  <ellipse cx="120" cy="244" rx="20" ry="8" fill="#F59E0B" />
+
+                  <!-- Right flipper (resting, viewer's right) -->
+                  <path d="M150 126 C176 150 180 186 168 210 C158 192 148 168 142 140 Z" fill="#0B1220" />
+
+                  <!-- Body -->
+                  <ellipse cx="100" cy="164" rx="60" ry="80" fill="url(#bodyGrad)" />
+                  <ellipse cx="100" cy="176" rx="42" ry="64" fill="url(#belly)" />
+
+                  <!-- Waving flipper (penguin's right, viewer's left) -->
+                  <g class="flipper-wave">
+                    <path d="M60 128 C34 112 20 84 24 58 C32 66 44 90 66 116 Z" fill="#0B1220" stroke="#1E293B" stroke-width="1" />
+                  </g>
+
+                  <!-- Head -->
+                  <circle cx="100" cy="82" r="46" fill="url(#bodyGrad)" />
+                  <ellipse cx="85" cy="92" rx="19" ry="22" fill="#F8FAFC" />
+                  <ellipse cx="115" cy="92" rx="19" ry="22" fill="#F8FAFC" />
+                  <ellipse cx="100" cy="104" rx="22" ry="14" fill="#F8FAFC" />
+
+                  <!-- Eyes -->
+                  <g class="eye">
+                    <circle cx="88" cy="90" r="6" fill="#0B1220" />
+                    <circle cx="112" cy="90" r="6" fill="#0B1220" />
+                    <circle cx="90" cy="88" r="2" fill="#fff" />
+                    <circle cx="114" cy="88" r="2" fill="#fff" />
+                  </g>
+                  <!-- Cheeks -->
+                  <ellipse cx="76" cy="104" rx="6" ry="3.5" fill="#FDA4AF" fill-opacity=".6" />
+                  <ellipse cx="124" cy="104" rx="6" ry="3.5" fill="#FDA4AF" fill-opacity=".6" />
+                  <!-- Beak -->
+                  <path d="M91 101 Q100 97 109 101 L100 113 Z" fill="#F59E0B" />
+
+                  <!-- Beanie -->
+                  <path d="M56 74 C56 36 76 22 100 22 C124 22 144 36 144 74 Z" fill="url(#beanie)" />
+                  <path d="M78 30 C74 44 72 58 72 72 M100 22 L100 72 M122 30 C126 44 128 58 128 72" stroke="#B91C1C" stroke-opacity=".55" stroke-width="2" fill="none" />
+                  <rect x="52" y="64" width="96" height="18" rx="9" fill="#DC2626" />
+                  <path d="M62 66 v14 M72 66 v14 M82 66 v14 M92 66 v14 M102 66 v14 M112 66 v14 M122 66 v14 M132 66 v14 M140 67 v12" stroke="#991B1B" stroke-opacity=".6" stroke-width="2" />
+                  <circle cx="100" cy="18" r="11" fill="#F8FAFC" />
+                  <circle cx="96" cy="15" r="3" fill="#fff" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <a href="#features" class="relative z-10 mx-auto mb-6 mt-2 hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500 transition hover:text-emerald-300 sm:inline-flex">
+        <i data-lucide="chevrons-down" class="h-4 w-4 animate-bounce"></i> scroll
+      </a>
+    </section>
+
+    <!-- ===================== FEATURES ===================== -->
+    <section id="features" class="relative py-24 sm:py-32" aria-labelledby="features-title">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="mx-auto max-w-3xl text-center">
+          <span class="font-mono text-xs uppercase tracking-[0.25em] text-emerald-400">[01 // CORE_MODULES]</span>
+          <h2 id="features-title" class="mt-4 font-display text-3xl font-bold tracking-tight text-white text-balance sm:text-5xl"><span class="text-gradient">Технологическое превосходство</span></h2>
+        </div>
+
+        <div id="features-grid" class="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+      </div>
+    </section>
+
+    <!-- ===================== PRICING ===================== -->
+    <section id="pricing" class="relative py-24 sm:py-32" aria-labelledby="pricing-title">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-1/4 h-[520px] bg-[radial-gradient(ellipse_40%_45%_at_50%_50%,rgba(16,185,129,0.10),transparent_70%)]"></div>
+      <div class="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="mx-auto max-w-3xl text-center">
+          <span class="font-mono text-xs uppercase tracking-[0.25em] text-emerald-400">[02 // PRICING_MATRIX]</span>
+          <h2 id="pricing-title" class="mt-4 font-display text-3xl font-bold tracking-tight text-white text-balance sm:text-5xl"><span class="text-gradient">Честные и прозрачные тарифы</span></h2>
+          <p class="mt-4 text-base text-slate-400 sm:text-lg">Чем дольше период — тем выгоднее. Все функции доступны на любом тарифе.</p>
+        </div>
+
+        <!-- Free trial banner -->
+        <div class="mx-auto mt-10 flex max-w-4xl flex-col gap-5 rounded-2xl border border-cyan-400/25 bg-white/[0.04] p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.37),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[8px] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div class="flex items-start gap-4">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-400/30 bg-cyan-400/10 text-cyan-300">
+              <i data-lucide="gift" class="h-5 w-5"></i>
+            </span>
+            <div>
+              <h3 class="font-display text-lg font-semibold text-white">Бесплатный пробный период</h3>
+              <p class="mt-1.5 inline-flex rounded-md border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-xs text-cyan-200">1 день • 5 Гб • 2 устройства</p>
+            </div>
+          </div>
+          <a href="https://pingwing.win/subscriptions" target="_blank" rel="noopener noreferrer"
+             class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-200 transition-all duration-500 hover:border-cyan-300/80 hover:bg-cyan-400/20 hover:text-white hover:shadow-[0_0_24px_rgba(34,211,238,0.3)]">
+            Активировать бесплатно <i data-lucide="arrow-right" class="h-4 w-4"></i>
+          </a>
+        </div>
+
+        <div class="mt-8 flex justify-center">
+          <div role="tablist" aria-label="Период подписки" id="period-tabs"
+               class="grid w-full max-w-2xl grid-cols-2 gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1.5 sm:grid-cols-4">
+            <button role="tab" data-months="1" data-discount="0" class="period-tab rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300">1 месяц</button>
+            <button role="tab" data-months="3" data-discount="10" class="period-tab rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300">3 месяца <span class="font-mono text-xs text-emerald-400">(-10%)</span></button>
+            <button role="tab" data-months="6" data-discount="20" class="period-tab rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300">6 месяцев <span class="font-mono text-xs text-emerald-400">(-20%)</span></button>
+            <button role="tab" data-months="12" data-discount="30" class="period-tab rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300">12 месяцев <span class="font-mono text-xs text-emerald-400">(-30%)</span></button>
+          </div>
+        </div>
+
+        <div id="pricing-grid" class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4"></div>
+      </div>
+    </section>
+
+    <!-- ===================== DOWNLOAD ===================== -->
+    <section id="download" class="relative py-24 sm:py-32" aria-labelledby="download-title">
+      <div class="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="mx-auto max-w-3xl text-center">
+          <span class="font-mono text-xs uppercase tracking-[0.25em] text-emerald-400">[03 // CLIENT_BUILDS]</span>
+          <h2 id="download-title" class="mt-4 font-display text-3xl font-bold tracking-tight text-white text-balance sm:text-5xl"><span class="text-gradient">Приложения для всех ваших платформ</span></h2>
+          <p class="mt-4 text-base text-slate-400 sm:text-lg">Официальный клиент Happ — импортируйте подписку и подключайтесь.</p>
+        </div>
+
+        <div id="download-grid" class="mt-14 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+      </div>
+    </section>
+
+    <!-- ===================== FAQ ===================== -->
+    <section id="faq" class="relative py-24 sm:py-32" aria-labelledby="faq-title">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="text-center">
+          <span class="font-mono text-xs uppercase tracking-[0.25em] text-emerald-400">[04 // FAQ]</span>
+          <h2 id="faq-title" class="mt-4 font-display text-3xl font-bold tracking-tight text-white text-balance sm:text-5xl"><span class="text-gradient">Часто задаваемые вопросы</span></h2>
+        </div>
+        <div id="faq-list" class="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 items-start"></div>
+      </div>
+    </section>
+
+    <!-- ===================== CONTACTS ===================== -->
+    <section id="contacts" class="relative py-24 sm:py-32" aria-labelledby="contacts-title">
+      <div class="relative mx-auto max-w-7xl px-4 sm:px-6">
+        <div class="mx-auto max-w-3xl text-center">
+          <span class="font-mono text-xs uppercase tracking-[0.25em] text-emerald-400">[05 // CONTACTS]</span>
+          <h2 id="contacts-title" class="mt-4 font-display text-3xl font-bold tracking-tight text-balance sm:text-5xl"><span class="bg-gradient-to-r from-emerald-300 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">Контакты</span></h2>
+        </div>
+
+        <ul class="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
+          <li>
+            <a href="mailto:support@pingwing.win" class="glass-card group flex h-full flex-col gap-5 rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60">
+              <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-emerald-300 transition-all duration-500 group-hover:shadow-[0_0_24px_rgba(0,255,157,0.35)]">
+                <i data-lucide="mail" class="h-5 w-5"></i>
+              </span>
+              <span class="flex flex-col gap-1">
+                <span class="font-mono text-[10px] uppercase tracking-widest text-slate-500">Email</span>
+                <span class="break-all font-display text-lg font-semibold text-white transition-colors group-hover:text-emerald-300">support@pingwing.win</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="xmpp:pingwing@exploit.im" class="glass-card group flex h-full flex-col gap-5 rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60">
+              <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-emerald-300 transition-all duration-500 group-hover:shadow-[0_0_24px_rgba(0,255,157,0.35)]">
+                <i data-lucide="message-square" class="h-5 w-5"></i>
+              </span>
+              <span class="flex flex-col gap-1">
+                <span class="font-mono text-[10px] uppercase tracking-widest text-slate-500">Jabber / XMPP</span>
+                <span class="break-all font-display text-lg font-semibold text-white transition-colors group-hover:text-emerald-300">pingwing@exploit.im</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="https://t.me/pingwing_robot" target="_blank" rel="noopener noreferrer" class="glass-card group flex h-full flex-col gap-5 rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60">
+              <span class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-emerald-300 transition-all duration-500 group-hover:shadow-[0_0_24px_rgba(0,255,157,0.35)]">
+                <i data-lucide="send" class="h-5 w-5"></i>
+              </span>
+              <span class="flex flex-col gap-1">
+                <span class="font-mono text-[10px] uppercase tracking-widest text-slate-500">Telegram</span>
+                <span class="break-all font-display text-lg font-semibold text-white transition-colors group-hover:text-emerald-300">@pingwing_robot</span>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
   </main>
 
-  <footer>
-    <div class="meta-group">
-      <div class="meta-item">
-        <span>Region:</span>
-        <strong>eu-central-1</strong>
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="relative border-t border-white/10 bg-black/40">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+      <div class="flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+        <div class="max-w-sm">
+          <a href="#top" class="flex items-center gap-2.5" aria-label="PingWing VPN — наверх">
+            <span class="font-display text-lg font-bold tracking-tight text-white">PingWing <span class="text-emerald-400">VPN</span></span>
+          </a>
+          <p class="mt-4 text-sm text-slate-400">Включил. Забыл.</p>
+        </div>
+
+        <nav aria-label="Юридическая информация">
+          <h3 class="font-mono text-xs uppercase tracking-[0.2em] text-slate-500">Документы</h3>
+          <ul class="mt-4 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 sm:gap-x-10">
+            <li><button type="button" data-modal="rules" class="modal-trigger text-left text-slate-300 transition hover:text-emerald-300">Правила использования</button></li>
+            <li><button type="button" data-modal="offer" class="modal-trigger text-left text-slate-300 transition hover:text-emerald-300">Публичная оферта</button></li>
+            <li><button type="button" data-modal="privacy" class="modal-trigger text-left text-slate-300 transition hover:text-emerald-300">Политика конфиденциальности</button></li>
+            <li><button type="button" data-modal="canary" class="modal-trigger inline-flex items-center gap-2 text-left text-slate-300 transition hover:text-emerald-300"><span class="h-1.5 w-1.5 rounded-full bg-amber-300 animate-pulse"></span>Свидетельство канарейки</button></li>
+          </ul>
+        </nav>
       </div>
-      <div class="meta-item">
-        <span>Engine:</span>
-        <strong>v4.18.2-proxy</strong>
-      </div>
-    </div>
-    <div class="meta-group">
-      <div class="meta-item">
-        <span>Ray ID:</span>
-        <strong id="ray-id">8d94c1a2e70f3b41</strong>
-      </div>
-      <div class="meta-item">
-        <span>SSL:</span>
-        <strong>TLS 1.3 / ChaCha20</strong>
+
+      <div class="mt-10 border-t border-white/10 pt-6 text-xs text-slate-500">
+        <p>© 2026 PingWing VPN — Включил. Забыл.</p>
       </div>
     </div>
   </footer>
 
+  <!-- ===================== MODAL ===================== -->
+  <div id="modal" class="hidden-modal fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div data-close class="absolute inset-0 bg-black/75 backdrop-blur-[4px]"></div>
+    <div class="modal-card relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-cyber-900/95 shadow-[0_8px_32px_0_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.06)]">
+      <div class="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
+        <div>
+          <p id="modal-tag" class="font-mono text-[10px] uppercase tracking-[0.25em] text-emerald-400"></p>
+          <h2 id="modal-title" class="mt-1 font-display text-xl font-semibold text-white sm:text-2xl"></h2>
+        </div>
+        <button type="button" data-close class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-slate-300 transition hover:border-emerald-400/40 hover:text-emerald-300">
+          <span class="sr-only">Закрыть</span>
+          <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+      </div>
+      <div id="modal-body" class="scrollbar-thin space-y-4 overflow-y-auto px-6 py-6 text-sm leading-relaxed text-slate-300"></div>
+    </div>
+  </div>
+
   <script>
-    // Generates dynamic random transaction ID on each reload
-    const hex = [...Array(16)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-    document.getElementById('ray-id').textContent = hex;
+    (function () {
+      'use strict';
+
+      /* ---------- Stars ---------- */
+      var starsEl = document.getElementById('stars');
+      var starCount = window.innerWidth < 640 ? 50 : 90;
+      var frag = document.createDocumentFragment();
+      for (var i = 0; i < starCount; i++) {
+        var s = document.createElement('span');
+        var size = Math.random() < 0.85 ? 1 + Math.random() : 2 + Math.random();
+        s.className = 'star';
+        s.style.width = size + 'px';
+        s.style.height = size + 'px';
+        s.style.left = (Math.random() * 100) + '%';
+        s.style.top = (Math.random() * 100) + '%';
+        s.style.animationDelay = (Math.random() * 5) + 's';
+        s.style.animationDuration = (3 + Math.random() * 4) + 's';
+        frag.appendChild(s);
+      }
+      starsEl.appendChild(frag);
+
+      /* ---------- Features ---------- */
+      var features = [
+        { icon: 'signal', tag: 'LTE_BYPASS', title: 'Обход белых списков на LTE/4G', text: 'Свободный интернет даже при ограничениях мобильных операторов и "белых списках"' },
+        { icon: 'git-branch', tag: 'SPLIT_ROUTE', title: 'Умная маршрутизация: включил и забыл', text: 'Российские банки, Госуслуги и локальные сервисы открываются без отключения VPN' },
+        { icon: 'gauge', tag: '10G_PORT', title: 'Порты до 10 Гбит/с', text: 'Никакой буферизации 4K/8K видео и минимальные задержки в играх' },
+        { icon: 'circle-play', tag: 'AD_FILTER', title: 'YouTube без рекламы', text: 'Автоматическая фильтрация рекламных модулей на всех серверах' },
+        { icon: 'scan-eye', tag: 'ANTI_DPI', title: 'Маскировка трафика (Anti-DPI)', text: 'Трафик маскируется под обычный HTTPS-серфинг. Провайдеры и ТСПУ не видят даже факт использования VPN' },
+        { icon: 'lock-keyhole', tag: 'CRYPTO', title: 'Шифрование', text: 'Криптография защищает каждый байт' },
+        { icon: 'file-x', tag: 'ZERO_LOGS', title: 'Строгая политика Zero-Logs', text: 'Мы не ведем журналы активности, IP-адресов и истории посещений. Приватность по умолчанию' },
+        { icon: 'network', tag: 'FAILOVER', title: 'Отказоустойчивая балансировка', text: 'Автоматическая балансировка нагрузки и незаметное переключение на резервные узлы' }
+      ];
+      document.getElementById('features-grid').innerHTML = features.map(function (f, idx) {
+        return '' +
+          '<article class="group relative flex flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06]">' +
+            '<div class="flex items-center justify-between">' +
+              '<span class="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-400/25 bg-emerald-400/10 text-emerald-300 transition-all duration-500 group-hover:shadow-[0_0_24px_rgba(0,255,157,0.35)]">' +
+                '<i data-lucide="' + f.icon + '" class="h-5 w-5"></i>' +
+              '</span>' +
+              '<span class="font-mono text-[10px] tracking-widest text-slate-500">0' + (idx + 1) + ' / ' + f.tag + '</span>' +
+            '</div>' +
+            '<h3 class="mt-5 font-display text-lg font-semibold leading-snug text-white">' + f.title + '</h3>' +
+            '<p class="mt-2 text-sm leading-relaxed text-slate-400">' + f.text + '</p>' +
+          '</article>';
+      }).join('');
+
+      /* ---------- Pricing ---------- */
+      var plans = [
+        { name: 'PingWing ×3', devices: '3 устройства', traffic: '300 Гб', prices: { 1: 250, 3: 675, 6: 1200, 12: 2100 } },
+        { name: 'PingWing ×5', devices: '5 устройств', traffic: '500 Гб', prices: { 1: 350, 3: 945, 6: 1680, 12: 2940 }, popular: true },
+        { name: 'PingWing ×10', devices: '10 устройств', traffic: '1000 Гб', prices: { 1: 600, 3: 1620, 6: 2880, 12: 5040 } },
+        { name: 'PingWing ×15', devices: '15 устройств', traffic: '1500 Гб', prices: { 1: 850, 3: 2295, 6: 4080, 12: 7140 } }
+      ];
+      var BUY_URL = 'https://pingwing.win/subscription/purchase';
+      var checkIcon = '<i data-lucide="check" class="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"></i>';
+
+      document.getElementById('pricing-grid').innerHTML = plans.map(function (p) {
+        var cardCls = p.popular
+          ? 'border-emerald-400 bg-emerald-400/[0.05] shadow-[0_0_30px_rgba(16,185,129,0.25)] hover:border-emerald-300 hover:bg-emerald-400/[0.09]'
+          : 'border-white/10 bg-white/[0.03] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] hover:border-emerald-500/40 hover:bg-white/[0.06]';
+        var btnCls = p.popular
+          ? 'btn-glow text-cyber-950'
+          : 'border border-emerald-400/30 bg-emerald-400/10 text-emerald-300 hover:border-emerald-400/70 hover:bg-emerald-400/20 hover:text-white';
+        return '' +
+          '<article class="price-card relative flex flex-col rounded-3xl border p-6 transition-colors duration-300 ' + cardCls + '">' +
+            (p.popular ? '<span class="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full btn-glow px-3 py-1 text-xs font-semibold text-cyber-950">Выбор пользователей</span>' : '') +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<h3 class="font-display text-xl font-semibold text-white">' + p.name + '</h3>' +
+              '<span class="discount-badge hidden rounded-md bg-emerald-400/15 px-2 py-0.5 font-mono text-[11px] font-semibold text-emerald-300"></span>' +
+            '</div>' +
+            '<div class="mt-6 flex items-end gap-2">' +
+              '<span class="price-value font-display text-5xl font-bold text-white' + (p.popular ? ' text-glow' : '') + '"></span>' +
+              '<span class="mb-1.5 text-sm text-slate-400">/мес</span>' +
+            '</div>' +
+            '<p class="mt-2 min-h-5 font-mono text-xs text-slate-500"><span class="old-price mr-2 text-slate-600 line-through"></span><span class="total-price"></span></p>' +
+            '<ul class="mt-6 flex flex-1 flex-col gap-3 text-sm">' +
+              '<li class="flex gap-2.5">' + checkIcon + '<span>' + p.devices + '</span></li>' +
+              '<li class="flex gap-2.5">' + checkIcon + '<span>' + p.traffic + ' трафика</span></li>' +
+            '</ul>' +
+            '<a href="' + BUY_URL + '" target="_blank" rel="noopener noreferrer" class="mt-8 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-500 ' + btnCls + '">' +
+              'Купить <i data-lucide="arrow-right" class="h-4 w-4"></i>' +
+            '</a>' +
+          '</article>';
+      }).join('');
+
+      var tabs = document.querySelectorAll('.period-tab');
+      var cards = document.querySelectorAll('.price-card');
+      var fmt = new Intl.NumberFormat('ru-RU');
+
+      function monthsLabel(n) {
+        if (n === 1) return '1 месяц';
+        if (n >= 2 && n <= 4) return n + ' месяца';
+        return n + ' месяцев';
+      }
+
+      function setPeriod(tab) {
+        var months = parseInt(tab.dataset.months, 10);
+        var discount = parseInt(tab.dataset.discount, 10);
+
+        tabs.forEach(function (t) {
+          var active = t === tab;
+          t.setAttribute('aria-selected', active ? 'true' : 'false');
+          t.className = 'period-tab rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 ' +
+            (active
+              ? 'bg-emerald-400/15 text-white border border-emerald-400/50 shadow-[0_0_20px_rgba(0,255,157,0.2)]'
+              : 'border border-transparent text-slate-400 hover:text-white hover:bg-white/5');
+        });
+
+        cards.forEach(function (card, idx) {
+          var plan = plans[idx];
+          var total = plan.prices[months];
+          var perMonth = Math.round(total / months);
+          var priceEl = card.querySelector('.price-value');
+          var badge = card.querySelector('.discount-badge');
+
+          priceEl.classList.add('updating');
+          setTimeout(function () {
+            priceEl.textContent = fmt.format(perMonth) + ' ₽';
+            priceEl.classList.remove('updating');
+          }, 180);
+
+          card.querySelector('.old-price').textContent = discount ? fmt.format(plan.prices[1]) + ' ₽' : '';
+          card.querySelector('.total-price').textContent = months > 1 ? 'Итого ' + fmt.format(total) + ' ₽ за ' + monthsLabel(months) : 'Оплата помесячно';
+          badge.textContent = '-' + discount + '%';
+          badge.classList.toggle('hidden', !discount);
+        });
+      }
+
+      tabs.forEach(function (t) { t.addEventListener('click', function () { setPeriod(t); }); });
+      setPeriod(tabs[0]);
+
+      /* ---------- Downloads ---------- */
+      var APPSTORE = 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215';
+      var GPLAY = 'https://play.google.com/store/apps/details?id=com.happproxy';
+      var GH = 'https://github.com/Happ-proxy/happ-desktop/releases/latest/download/';
+      var platforms = [
+        { icon: 'smartphone', title: 'iOS', sub: 'iPhone & iPad', groups: [
+          { links: [
+            { label: 'App Store Global', href: APPSTORE },
+            { label: 'App Store Rus', href: 'https://apps.apple.com/ru/app/happ-lite/id6799917773' }
+          ]}
+        ]},
+        { icon: 'tablet-smartphone', title: 'Android', sub: 'Смартфоны и планшеты', groups: [
+          { links: [
+            { label: 'Google Play', href: GPLAY },
+            { label: 'Direct APK', href: 'https://github.com/Happ-proxy/happ-android/releases/latest/download/Happ.apk' }
+          ]}
+        ]},
+        { icon: 'monitor', title: 'Windows', sub: 'Компьютеры и ноутбуки', groups: [
+          { links: [
+            { label: 'Windows x64', href: GH + 'setup-Happ.x64.exe' },
+            { label: 'Windows ARM64', href: GH + 'setup-Happ.arm64.exe' }
+          ]}
+        ]},
+        { icon: 'laptop', title: 'macOS', sub: 'Apple Silicon & Intel', groups: [
+          { links: [{ label: 'App Store', href: APPSTORE }] }
+        ]},
+        { icon: 'terminal', title: 'Linux', sub: 'Debian, Fedora, Arch', groups: [
+          { name: 'x64', links: [
+            { label: '.deb', href: GH + 'Happ.linux.x64.deb' },
+            { label: '.rpm', href: GH + 'Happ.linux.x64.rpm' },
+            { label: '.pkg.tar.zst', href: GH + 'Happ.linux.x64.pkg.tar.zst' }
+          ]},
+          { name: 'ARM64', links: [
+            { label: '.deb', href: GH + 'Happ.linux.arm64.deb' },
+            { label: '.rpm', href: GH + 'Happ.linux.arm64.rpm' },
+            { label: '.pkg.tar.zst', href: GH + 'Happ.linux.arm64.pkg.tar.zst' }
+          ]}
+        ]},
+        { icon: 'tv', title: 'Smart TV', sub: 'Android TV & Apple TV', groups: [
+          { links: [
+            { label: 'Android TV', href: GPLAY },
+            { label: 'Apple TV', href: 'https://apps.apple.com/us/app/happ-proxy-utility-for-tv/id6748297274' }
+          ]}
+        ]}
+      ];
+
+      function linkHtml(l) {
+        var cls = 'border border-white/15 bg-white/[0.04] text-slate-200 hover:border-emerald-400/50 hover:bg-white/[0.08] hover:text-white transition-colors duration-300';
+        return '<a href="' + l.href + '" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold ' + cls + '">' +
+          '<i data-lucide="download" class="h-3.5 w-3.5"></i>' + l.label + '</a>';
+      }
+
+      document.getElementById('download-grid').innerHTML = platforms.map(function (p) {
+        var groups = p.groups.map(function (g) {
+          return '<div class="' + (g.name ? 'flex flex-wrap items-center gap-2' : 'flex flex-wrap gap-2') + '">' +
+            (g.name ? '<span class="w-14 font-mono text-[10px] uppercase tracking-widest text-slate-500">' + g.name + '</span>' : '') +
+            g.links.map(linkHtml).join('') +
+          '</div>';
+        }).join('');
+        return '' +
+          '<article class="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06]">' +
+            '<div class="flex items-center gap-4">' +
+              '<span class="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-emerald-400/15 to-cyan-400/10 text-emerald-300">' +
+                '<i data-lucide="' + p.icon + '" class="h-6 w-6"></i>' +
+              '</span>' +
+              '<div>' +
+                '<h3 class="font-display text-lg font-semibold text-white">' + p.title + '</h3>' +
+                '<p class="text-sm text-slate-400">' + p.sub + '</p>' +
+              '</div>' +
+              '<span class="ml-auto font-mono text-[10px] uppercase tracking-widest text-slate-600">Happ</span>' +
+            '</div>' +
+            '<div class="mt-6 flex flex-1 flex-col justify-end gap-3">' + groups + '</div>' +
+          '</article>';
+      }).join('');
+
+      /* ---------- FAQ (Responsive 2x5 Grid) ---------- */
+      var faqs = [
+        {
+          q: 'Какими способами можно оплатить подписку?',
+          a: 'Мы принимаем оплату привычными российскими способами через защищённый платёжный шлюз <strong class="text-white">LAVA.ru</strong>. Платёж обрабатывается мгновенно, и доступ активируется сразу после подтверждения.<br><br>Доступные методы оплаты:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Банковские карты МИР:</strong> Поддерживаются дебетовые и кредитные карты национальной платёжной системы МИР любых банков РФ (Сбер, Т-Банк, Альфа-Банк, ВТБ и др.).</li><li class="text-white"><strong class="text-emerald-400">Система быстрых платежей (СБП):</strong> Мгновенная оплата по динамическому QR-коду или ссылке прямо в приложении вашего мобильного банка без необходимости вручную вводить данные карты.</li><li class="text-white"><strong class="text-emerald-400">Безопасность и конфиденциальность:</strong> Все транзакции проходят через сертифицированный шлюз LAVA.ru — мы не видим и не храним реквизиты ваших платёжных средств.</li><li class="text-white"><strong class="text-emerald-400">Без скрытых списаний:</strong> У нас нет принудительных автопродлений или регулярных списаний. Вы платите только фиксированную стоимость выбранного тарифа.</li></ul>'
+        },
+        {
+          q: 'Какие условия возврата средств?',
+          a: 'Мы осуществляем полный возврат средств <strong class="text-white">только в случае технической невозможности подключения</strong> ни к одному из доступных серверов нашей сети.<br><br>Условия и порядок оформления:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white">Обращение подано в течение первых 24 часов после первой оплаты.</li><li class="text-white">Служба поддержки проверила диагностику и подтвердила, что соединение не устанавливается по вине инфраструктуры сервиса или провайдерских ограничений.</li></ul><br>Возврат не производится, если сервис функционирует штатно, но вы передумали или ошиблись с тарифом. Чтобы убедиться в совместимости с вашим провайдером перед оплатой, воспользуйтесь <a href="https://pingwing.win/subscriptions" target="_blank" rel="noopener noreferrer" class="text-emerald-400 underline underline-offset-2 hover:text-emerald-300">бесплатным пробным периодом</a>.'
+        },
+        {
+          q: 'Можно ли отправить подписку в подарок?',
+          a: '<strong class="text-white">Да, конечно.</strong> Вы можете легко оплатить и подарить доступ на любой удобный срок своим родным, близким, друзьям или коллегам.<br><br>Как работает подарок:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Оформление в пару кликов:</strong> В личном кабинете или через нашего Telegram-бота выберите подходящий тариф (на 3, 5, 10 или 15 устройств) и желаемый период подписки.</li><li class="text-white"><strong class="text-emerald-400">Удобная передача:</strong> После оплаты вы получите персональный подарочный ключ или готовую ссылку, которую можно просто отправить получателю.</li><li class="text-white"><strong class="text-emerald-400">Без ввода платёжных данных:</strong> Получателю подарка не придётся указывать данные банковских карт — достаточно импортировать ссылку в Happ, и защищённое соединение сразу станет доступно.</li></ul>'
+        },
+        {
+          q: 'Можно ли делиться доступом с близкими?',
+          a: '<strong class="text-white">Да, без каких-либо ограничений.</strong> Вы можете свободно передавать доступ членам семьи, друзьям или коллегам — сервис не привязывается к одной геолокации или домашней сети.<br><br>Главные правила совместного использования:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Лимит устройств:</strong> Количество одновременно работающих гаджетов ограничено только выбранным тарифом (3, 5, 10 или 15 устройств).</li><li class="text-white"><strong class="text-emerald-400">Общий пакет трафика:</strong> Включённые в тариф гигабайты расходуются совместно всеми подключёнными пользователями.</li><li class="text-white"><strong class="text-emerald-400">Удобное подключение:</strong> Достаточно просто отправить близким вашу персональную ссылку на подписку для импорта в приложение Happ.</li></ul>'
+        },
+        {
+          q: 'Что происходит при исчерпании трафика?',
+          a: 'При полном расходе включённых гигабайтов соединение с серверами <strong class="text-white">безопасно приостанавливается</strong>. Никаких скрытых списаний или автоматических платных продлений за "перерасход" у нас нет.<br><br>Как работает лимит и как возобновить доступ:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Ежемесячный сброс:</strong> Пакет трафика выделяется на один расчётный месяц. Даже при покупке подписки на 3, 6 или 12 месяцев лимит гигабайтов обнуляется и начисляется заново каждые 30 дней.</li><li class="text-white"><strong class="text-emerald-400">Докупка трафика:</strong> Если лимит закончился раньше срока, вы можете в пару кликов докупить дополнительный пакет гигабайтов через личный кабинет или Telegram-бота — доступ восстановится мгновенно.</li><li class="text-white"><strong class="text-emerald-400">Ожидание нового месяца:</strong> Если срочности нет, можно просто дождаться даты начала следующего расчётного периода — трафик обновится автоматически в полном объёме.</li></ul>'
+        },
+        {
+          q: 'Какие локации доступны для подключения?',
+          a: 'Мы непрерывно развиваем сеть и добавляем новые локации. Переключение между узлами доступно в один клик и ничем не ограничено.<br><br>Доступная география и специализированные конфигурации:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Европа и США:</strong> Австрия, Германия, Нидерланды, Финляндия, Швеция и США. Обеспечивают максимальную скорость для стриминга, загрузок и доступа к зарубежным ресурсам.</li><li class="text-white"><strong class="text-emerald-400">Узлы "Обходов":</strong> Специальные серверы с усиленной маскировкой трафика для работы при "Белых списках" на LTE/4G сетях</li><li class="text-white"><strong class="text-emerald-400">Каскадные локации "Россия → Заграница":</strong> Серверы, улучшающие и стабилизирующие маршрутизацию. Ваш провайдер видит подключение к RU-адресам, а не заграничным.</li></ul>'
+        },
+        {
+          q: 'Работают ли ChatGPT, Claude и Gemini?',
+          a: '<strong class="text-white">Да, работают стабильно и без сбоев.</strong> Серверы PingWing VPN полностью совместимы со всеми популярными AI-сервисами, включая ChatGPT (OpenAI), Claude (Anthropic), Google Gemini, Perplexity и Midjourney.<br><br>Особенности работы с нейросетями:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Чистые IP-адреса:</strong> Наши узлы не находятся в «чёрных списках» систем защиты Cloudflare, что исключает ошибки «Access Denied», бесконечные проверки капчей и блокировки по геолокации.</li><li class="text-white"><strong class="text-emerald-400">Веб-версии и нативные приложения:</strong> Нейросети без проблем работают как в браузерах, так и через официальные приложения на смартфонах (iOS, Android) и компьютерах (macOS, Windows).</li></ul>'
+        },
+        {
+          q: 'Разрешены торренты (P2P)?',
+          a: '<strong class="text-white">Скачивание через VPN-серверы закрыто</strong> по требованию дата-центров и хостинг-провайдеров. Однако вам <strong class="text-white">не придётся отключать VPN</strong> для работы с торрент-клиентами.<br><br>Как реализована умная маршрутизация:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Автоматический обход:</strong> Вместе с подпиской ваше приложение Happ автоматически получает готовые конфигурационные правила. Весь P2P/BitTorrent-трафик направляется напрямую через вашего домашнего провайдера мимо VPN.</li><li class="text-white"><strong class="text-emerald-400">"Включил и забыл":</strong> Никаких ручных настроек или разделения туннелей — вы можете спокойно оставлять VPN активным, скачивая файлы на предельной скорости вашего домашнего тарифа.</li><li class="text-white"><strong class="text-emerald-400">Экономия трафика:</strong> Многогигабайтные загрузки фильмов и игр не тратят включённый в подписку лимит трафика PingWing VPN.</li></ul>'
+        },
+        {
+          q: 'Подходит ли сервис для онлайн-игр?',
+          a: '<strong class="text-white">Да, отлично подходит.</strong> Мы размещаем серверы в качественных Евровейских дата-центрах. Это гарантирует минимальный сетевой отклик.<br><br>Особенности для гейминга и рекомендации по настройке:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Проверка пинга в один клик:</strong> В приложении Happ встроен замер задержки до каждого сервера в реальном времени. Мы рекомендуем проверять пинг перед подключением — это позволит выбрать наилучшую локацию именно для вашего интернет-провайдера и региона.</li><li class="text-white"><strong class="text-emerald-400">Оптимальные локации:</strong> Для онлайн-игр наименьший пинг обеспечивают узлы в Финляндии и Швеции благодаря географической близости к РФ.</li><li class="text-white"><strong class="text-emerald-400">Широкие каналы до 10 Гбит/с:</strong> Высокая пропускная способность гарантирует стабильный коннект без просадок скорости даже в моменты вечерней пиковой нагрузки на сеть.</li><li class="text-white"><strong class="text-emerald-400">Доступ ко всем сервисам:</strong> Вы получаете доступ к зарубежным игровым серверам, магазинам (Steam, PSN, Xbox, Battle.net и др.) и голосовым чатам вроде Discord.</li></ul>'
+        },
+        {
+          q: 'Что происходит при новых блокировках?',
+          a: 'Будем честны: это непрерывная <strong class="text-white">игра в кошки-мышки</strong>. Цензоры постоянно ищут новые методы фильтрации, а мы непрерывно держим руку на пульсе и оперативно внедряем новые способы обхода.<br><br>Как PingWing обеспечивает стабильность:<ul class="mt-2 space-y-1.5 pl-4 list-disc marker:text-emerald-400"><li class="text-white"><strong class="text-emerald-400">Сила сообщества:</strong> Против цензуры выступает огромное глобальное движение разработчиков, энтузиастов и независимых VPN-провайдеров. PingWing находится в одной команде с этим сообществом.</li><li class="text-white"><strong class="text-emerald-400">Быстрая адаптация:</strong> Цензоны внедряют новые алгоритмы блокировок, PingWing адаптирует свои узлы.</li><li class="text-white"><strong class="text-emerald-400">Автоматическое обновление для вас:</strong> Никаких ручных правок или переустановок — рабочие серверы и актуальные правила маршрутизации подтягиваются в Happ автоматически.</li></ul>'
+        }
+      ];
+
+      function renderFaqItem(f, i) {
+        return '' +
+          '<div class="faq-item rounded-2xl border border-white/10 bg-white/[0.03] transition-colors duration-300 hover:border-emerald-500/40 hover:bg-white/[0.06]">' +
+            '<h3>' +
+              '<button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-5 py-5 text-left sm:px-6" aria-expanded="false" aria-controls="faq-panel-' + i + '" id="faq-btn-' + i + '">' +
+                '<span class="flex items-start gap-3">' +
+                  '<span class="mt-0.5 font-mono text-xs text-emerald-400/70">' + (i < 9 ? '0' : '') + (i + 1) + '</span>' +
+                  '<span class="font-display text-base font-medium text-white sm:text-lg">' + f.q + '</span>' +
+                '</span>' +
+                '<i data-lucide="chevron-down" class="faq-chevron h-5 w-5 shrink-0 text-slate-400"></i>' +
+              '</button>' +
+            '</h3>' +
+            '<div id="faq-panel-' + i + '" role="region" aria-labelledby="faq-btn-' + i + '" class="faq-panel">' +
+              '<div class="px-5 pb-5 pl-12 text-sm leading-relaxed text-slate-400 sm:px-6 sm:pl-[3.25rem] sm:text-base">' + f.a + '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      var mid = Math.ceil(faqs.length / 2);
+      var col1Html = faqs.slice(0, mid).map(function (f, i) { return renderFaqItem(f, i); }).join('');
+      var col2Html = faqs.slice(mid).map(function (f, i) { return renderFaqItem(f, i + mid); }).join('');
+
+      var faqList = document.getElementById('faq-list');
+      faqList.innerHTML = '<div class="flex flex-col gap-4 w-full">' + col1Html + '</div><div class="flex flex-col gap-4 w-full">' + col2Html + '</div>';
+
+      faqList.addEventListener('click', function (e) {
+        var btn = e.target.closest('.faq-trigger');
+        if (!btn) return;
+        var item = btn.closest('.faq-item');
+        var isOpen = item.classList.contains('open');
+        faqList.querySelectorAll('.faq-item.open').forEach(function (other) {
+          other.classList.remove('open');
+          other.querySelector('.faq-panel').style.maxHeight = '0px';
+          other.querySelector('.faq-trigger').setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          var panel = item.querySelector('.faq-panel');
+          item.classList.add('open');
+          panel.style.maxHeight = panel.scrollHeight + 'px';
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+
+      /* ---------- Mobile menu ---------- */
+      var toggle = document.getElementById('menu-toggle');
+      var menu = document.getElementById('mobile-menu');
+      function setMenu(open) {
+        menu.classList.toggle('open', open);
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.querySelector('.icon-open').classList.toggle('hidden', open);
+        toggle.querySelector('.icon-close').classList.toggle('hidden', !open);
+      }
+      toggle.addEventListener('click', function () { setMenu(!menu.classList.contains('open')); });
+      menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setMenu(false); }); });
+      window.addEventListener('resize', function () { if (window.innerWidth >= 1024) setMenu(false); });
+
+      /* ---------- Modals ---------- */
+      var docs = {
+        rules: {
+          tag: '[DOC // TERMS_OF_USE]',
+          title: 'Правила использования',
+          body: [
+            'Сервис PingWing VPN предоставляется для защиты персональных данных, обеспечения приватности и безопасного доступа к сети Интернет.',
+            '<strong class="text-white">Запрещено</strong> использовать сервис для рассылки спама, проведения DDoS-атак, сканирования портов, распространения вредоносного ПО, а также для любой деятельности, нарушающей применимое законодательство.',
+            'Подписка является персональной. Количество одновременных подключений ограничено выбранным тарифом (3, 5, 10 или 15 устройств). Передача ключей доступа третьим лицам вне рамок тарифа запрещена.',
+            'При выявлении злоупотреблений, создающих угрозу стабильности инфраструктуры, администрация вправе ограничить доступ к сервису без возврата средств.',
+            'Мы оставляем за собой право обновлять настоящие правила. Актуальная редакция всегда доступна на этой странице.'
+          ]
+        },
+        offer: {
+          tag: '[DOC // PUBLIC_OFFER]',
+          title: 'Публичная оферта',
+          body: [
+            'Настоящий документ является публичной офертой на оказание услуг по предоставлению доступа к защищённой сети PingWing VPN.',
+            '<strong class="text-white">1. Предмет.</strong> Исполнитель предоставляет Пользователю доступ к серверной инфраструктуре согласно выбранному тарифу и периоду подписки.',
+            '<strong class="text-white">2. Акцепт.</strong> Оплата тарифа на сайте pingwing.win означает полное и безоговорочное принятие условий настоящей оферты.',
+            '<strong class="text-white">3. Стоимость и оплата.</strong> Стоимость определяется действующим прайсом. Скидки за длительные периоды (3, 6 и 12 месяцев) применяются автоматически.',
+            '<strong class="text-white">4. Возврат.</strong> Пользователь может запросить возврат средств в течение 24 часов после оплаты, если услуга не была оказана по технической вине Исполнителя.',
+            '<strong class="text-white">5. Ответственность.</strong> Исполнитель не несёт ответственности за действия Пользователя в сети и за недоступность сторонних ресурсов.'
+          ]
+        },
+        privacy: {
+          tag: '[DOC // PRIVACY_POLICY]',
+          title: 'Политика конфиденциальности',
+          body: [
+            'Мы собираем только минимум данных, необходимых для работы: адрес электронной почты (или идентификатор аккаунта) и статус подписки.',
+            '<strong class="text-white">Мы не храним:</strong> историю посещённых сайтов, DNS-запросы, содержимое трафика, временные метки подключений и исходные IP-адреса пользователей.',
+            'Серверы работают в режиме RAM-only: после перезагрузки узла на нём не остаётся никаких данных о сессиях.',
+            'Платёжные данные обрабатываются сторонними платёжными провайдерами и не передаются на наши серверы.',
+            'Мы не продаём и не передаём персональные данные третьим лицам. По запросу пользователя аккаунт и связанные с ним данные удаляются безвозвратно.'
+          ]
+        },
+        canary: {
+          tag: '[DOC // WARRANT_CANARY]',
+          title: 'Свидетельство канарейки',
+          body: [
+            '<span class="inline-flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 font-mono text-xs text-emerald-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>Обновлено: <span data-canary-date></span></span>',
+            'По состоянию на дату обновления команда PingWing VPN заявляет:',
+            '<ul class="list-disc space-y-2 pl-5 marker:text-emerald-400"><li>Мы не получали ордеров, судебных повесток или запросов спецслужб на раскрытие данных пользователей.</li><li>Мы не получали запросов с требованием о неразглашении (gag order).</li><li>Мы не устанавливали бэкдоров и не передавали ключи шифрования третьим лицам.</li><li>Ни один из наших серверов не был изъят или скомпрометирован.</li></ul>',
+            'Данное заявление обновляется ежедневно. Если оно перестало обновляться или было удалено — пользователям следует сделать соответствующие выводы.'
+          ]
+        }
+      };
+
+      var modal = document.getElementById('modal');
+      var modalTitle = document.getElementById('modal-title');
+      var modalTag = document.getElementById('modal-tag');
+      var modalBody = document.getElementById('modal-body');
+      var lastFocus = null;
+
+      function moscowDate() {
+        var parts = new Intl.DateTimeFormat('ru-RU', {
+          timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', year: 'numeric'
+        }).formatToParts(new Date());
+        function part(type) {
+          for (var i = 0; i < parts.length; i++) if (parts[i].type === type) return parts[i].value;
+          return '';
+        }
+        return part('day') + '.' + part('month') + '.' + part('year');
+      }
+
+      function openModal(key) {
+        var d = docs[key];
+        if (!d) return;
+        lastFocus = document.activeElement;
+        modalTag.textContent = d.tag;
+        modalTitle.textContent = d.title;
+        modalBody.innerHTML = d.body.map(function (p) { return p.indexOf('<ul') === 0 ? p : '<p>' + p + '</p>'; }).join('');
+        modalBody.querySelectorAll('[data-canary-date]').forEach(function (el) { el.textContent = moscowDate(); });
+        modal.classList.remove('hidden-modal');
+        document.body.style.overflow = 'hidden';
+        modal.querySelector('button[data-close]').focus();
+      }
+      function closeModal() {
+        modal.classList.add('hidden-modal');
+        document.body.style.overflow = '';
+        if (lastFocus) lastFocus.focus();
+      }
+      document.querySelectorAll('.modal-trigger').forEach(function (b) {
+        b.addEventListener('click', function () { openModal(b.dataset.modal); });
+      });
+      modal.querySelectorAll('[data-close]').forEach(function (el) { el.addEventListener('click', closeModal); });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden-modal')) closeModal();
+      });
+
+      /* ---------- Icons ---------- */
+      lucide.createIcons();
+    })();
   </script>
 </body>
 </html>
